@@ -1,9 +1,9 @@
 import sys
 from pyspark.sql import SparkSession
-from funciones.procesamiento import leer_datos, limpiar_datos, join_datos
+from funciones.procesamiento import crear_DF_Delitos, crear_DF_Educacion ,  crear_DF_Ingreso, crear_DF_idh, crear_DF_ev, crear_DF_ibm, crear_DF_idc, join_delitosEducacion, join_todo, escribir_BaseDatos
 
 def main():
-    if len(sys.argv) != 4:
+    if len(sys.argv) != 9:
         print("Uso: main.py AsaltosUltimoAnio.csv Ingresopromedioestimado.csv Educacionedad.csv IBM.csv Educacionsexo.csv IC.csv Esperanzadevida.csv IDH.csv")
         sys.exit(1)
 
@@ -18,20 +18,50 @@ def main():
 
     spark = SparkSession.builder.appName("Programa Estudiante").getOrCreate()
 
-    # Leer datos
-    # df_AsaltosUltimoAnioraw, df_Ingresopromedioestimadoraw, df_Educacionedadraw, df_IBMraw, df_Educacionsexoraw, df_ICraw, df_Esperanzadevidaraw, df_IDHraw = leer_datos(spark, path_AsaltosUltimoAnio,path_Ingresopromedioestimado,path_Educacionedad,path_IBM,path_Educacionsexo,path_IC,path_Esperanzadevida,path_IDH)
+    #Creacion de DataFrames
     
-    df_AsaltosUltimoAnioraw = leer_datos(spark, path_AsaltosUltimoAnio,path_Ingresopromedioestimado,path_Educacionedad,path_IBM,path_Educacionsexo,path_IC,path_Esperanzadevida,path_IDH)
+    # DF_Delitos
+    df_delitos = crear_DF_Delitos(spark, path_AsaltosUltimoAnio)
+
+    #df_delitos.show(5)
     
-    df_AsaltosUltimoAnioraw.show(5)
+    # DF_Educacion
+    df_educacion = crear_DF_Educacion(spark, path_Educacionedad, path_Educacionsexo)
+    #df_educacion.show(5)
     
-    # Limpiar 
+    ## DF_Ingreso
+    df_ingreso = crear_DF_Ingreso(spark, path_Ingresopromedioestimado)
+    #df_ingreso.show(5)
+    
+    ## DF_idh
+    df_idh = crear_DF_idh(spark, path_IDH)
+    #df_idh.show(5)
+    
+    ## DF_ev
+    df_ev = crear_DF_ev(spark, path_Esperanzadevida)
+   # df_ev.show(5)
+    
+    ## DF_ibm
+    df_ibm = crear_DF_ibm(spark, path_IBM)   
+    #df_ibm.show(5)
+    
+    ## DF_idc
+    df_idc = crear_DF_idc(spark, path_IC)
+    #df_idc.show(5)
+    
+    # Join Datos
+    
+    ## Join Delitos y Educacion
+    # df_delitosEducacion = join_delitosEducacion(df_delitos, df_educacion)
+    
+    # df_delitosEducacion.show(5)
+    
+    ## join_delitosEducacion con indices
+    
+    # df_final = join_todo(df_delitosEducacion, df_ingreso, df_idh, df_ev, df_ibm, df_idc) 
+    
+    # escribir Datos
   
-    
-    
-    # Unir datos
-
-
     spark.stop()
 
 if __name__ == "__main__":
