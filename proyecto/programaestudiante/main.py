@@ -52,9 +52,9 @@ def main():
     # Join Datos
     
     ## Join Delitos y Educacion
-    # df_delitosEducacion = join_delitosEducacion(df_delitos, df_educacion)
+    df_delitosEducacion = join_delitosEducacion(df_delitos, df_educacion)
     
-    # df_delitosEducacion.show(5)
+    df_delitosEducacion.show(5)
     
     ## join_delitosEducacion con indices
     

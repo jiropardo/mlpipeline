@@ -130,6 +130,11 @@ def crear_DF_Educacion(spark, path_Educacionedad, path_Educacionsexo):
 
     # Rename the column and save back to the DataFrame
     df_educacion = df_educacion.withColumnRenamed("Rango_Edad", "Rango_Edad_Educacion")
+    
+    # Encontrar total personas por canton
+    df_educacion = df_educacion.groupBy("Nivel_Educativo", "Canton", "Provincia", "Sexo").agg(
+    sum("Cantidad_Personas_Distrito").alias("Total_Personas_Canton")
+    )
 
     return df_educacion
                  
