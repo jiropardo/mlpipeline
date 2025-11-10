@@ -4,6 +4,7 @@ from pyspark.sql.window import Window
 import pyspark.sql.functions as F
 from pyspark.sql.types import StructType, StructField, StringType, IntegerType, BooleanType , DateType
 from pyspark.sql.functions import col, upper, translate
+from pyspark.sql.functions import sum
 
 ### DF delitos
 
