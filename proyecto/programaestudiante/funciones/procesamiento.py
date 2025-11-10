@@ -366,7 +366,7 @@ def join_todo(df_delitosEducation, df_idh, df_ingreso, df_ev, df_idc, df_ibm):
     # Show result
     df_merged = df_merged.dropna()
 
-    df_merged.orderBy("Total_Asaltos", ascending=False).display()
+    df_merged.orderBy("Total_Asaltos", ascending=False)
     
     return df_merged
 
