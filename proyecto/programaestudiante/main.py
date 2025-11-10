@@ -1,4 +1,4 @@
-import findspark
+#import findspark
 import sys
 from pyspark.sql import SparkSession
 from funciones.procesamiento import crear_DF_Delitos, crear_DF_Educacion ,  crear_DF_Ingreso, crear_DF_idh, crear_DF_ev, crear_DF_ibm, crear_DF_idc, join_delitosEducacion, join_todo, escribir_BaseDatos
@@ -7,7 +7,7 @@ from pyspark.sql.types import (StringType, IntegerType, FloatType,
                                DecimalType, StructField, StructType, DoubleType)
 
 
-findspark.init('/usr/lib/python3.7/site-packages/pyspark')
+#findspark.init('/usr/lib/python3.7/site-packages/pyspark')
 
 def main():
     if len(sys.argv) != 9:
@@ -75,8 +75,14 @@ def main():
     df_final.show(5)
     
     # escribir Datos
-    
-    escribir_BaseDatos(df_final)
+    df_final.write \
+    .format("jdbc") \
+    .mode('overwrite') \
+    .option("url", "jdbc:postgresql://172.17.0.1:5433/postgres") \
+    .option("user", "postgres") \
+    .option("password", "testPassword") \
+    .option("dbtable", "DatosUnidos") \
+    .save()
   
     spark.stop()
 
