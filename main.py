@@ -8,14 +8,7 @@ from pyspark.sql.types import (StringType, IntegerType, FloatType,
                                DecimalType, StructField, StructType, DoubleType)
 
 
-jar_path = "/src/sparkml/postgresql-42.2.14.jar"
-
-# Ensure file exists
-if not os.path.exists(jar_path):
-    raise FileNotFoundError(f"PostgreSQL JAR not found: {jar_path}")
-
-# Export to environment so JVM definitely sees it
-os.environ["SPARK_CLASSPATH"] = jar_path
+findspark.init('/usr/lib/python3.7/site-packages/pyspark')
 
 
 def main():
@@ -39,12 +32,14 @@ def main():
     # .config("spark.executor.extraClassPath", "postgresql-42.2.14.jar") \
     # .getOrCreate()
     
+    jar_path = "/src/sparkml/postgresql-42.2.14.jar"
+    
     spark = SparkSession.builder \
-    .appName("Programa Estudiante") \
-    .config("spark.driver.extraClassPath", jar_path) \
-    .config("spark.executor.extraClassPath", jar_path) \
-    .getOrCreate()
-
+        .appName("Programa Estudiante") \
+        .config("spark.jars", jar_path) \
+        .config("spark.driver.extraClassPath", jar_path) \
+        .config("spark.executor.extraClassPath", jar_path) \
+        .getOrCreate()
     #Creacion de DataFrames
     
     # DF_Delitos
@@ -93,11 +88,12 @@ def main():
     # escribir Datos
     df_final.write \
     .format("jdbc") \
-    .mode("overwrite") \
     .option("url", "jdbc:postgresql://172.17.0.1:5433/postgres") \
+    .option("driver", "org.postgresql.Driver") \
     .option("user", "postgres") \
     .option("password", "testPassword") \
     .option("dbtable", "DatosUnidos") \
+    .mode("overwrite") \
     .save()
   
     spark.stop()
