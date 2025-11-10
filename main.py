@@ -1,10 +1,21 @@
-#import findspark
+import findspark
+import os
 import sys
 from pyspark.sql import SparkSession
 from funciones.procesamiento import crear_DF_Delitos, crear_DF_Educacion ,  crear_DF_Ingreso, crear_DF_idh, crear_DF_ev, crear_DF_ibm, crear_DF_idc, join_delitosEducacion, join_todo
 
 from pyspark.sql.types import (StringType, IntegerType, FloatType, 
                                DecimalType, StructField, StructType, DoubleType)
+
+
+jar_path = "/src/sparkml/postgresql-42.2.14.jar"
+
+# Ensure file exists
+if not os.path.exists(jar_path):
+    raise FileNotFoundError(f"PostgreSQL JAR not found: {jar_path}")
+
+# Export to environment so JVM definitely sees it
+os.environ["SPARK_CLASSPATH"] = jar_path
 
 
 def main():
@@ -30,8 +41,8 @@ def main():
     
     spark = SparkSession.builder \
     .appName("Programa Estudiante") \
-    .config("spark.driver.extraClassPath", "/src/sparkml/postgresql-42.2.14.jar") \
-    .config("spark.executor.extraClassPath", "/src/sparkml/postgresql-42.2.14.jar") \
+    .config("spark.driver.extraClassPath", jar_path) \
+    .config("spark.executor.extraClassPath", jar_path) \
     .getOrCreate()
 
     #Creacion de DataFrames
