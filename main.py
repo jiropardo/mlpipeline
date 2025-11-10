@@ -30,7 +30,6 @@ def main():
     
     spark = SparkSession.builder \
     .appName("Programa Estudiante") \
-    .config("spark.jars", "/src/sparkml/postgresql-42.2.14.jar") \
     .config("spark.driver.extraClassPath", "/src/sparkml/postgresql-42.2.14.jar") \
     .config("spark.executor.extraClassPath", "/src/sparkml/postgresql-42.2.14.jar") \
     .getOrCreate()
