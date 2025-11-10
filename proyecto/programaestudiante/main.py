@@ -76,6 +76,7 @@ def main():
     df_final = join_todo(df_delitosEducacion, df_ingreso, df_idh, df_ev, df_ibm, df_idc) 
     
     df_final.show(5)
+    print(spark.sparkContext.getConf().get("spark.jars"))
     
     # escribir Datos
     df_final.write \
