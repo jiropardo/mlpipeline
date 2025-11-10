@@ -5,6 +5,9 @@ import pyspark.sql.functions as F
 from pyspark.sql.types import StructType, StructField, StringType, IntegerType, BooleanType , DateType
 from pyspark.sql.functions import col, upper, translate
 from pyspark.sql.functions import sum
+from functools import reduce
+from pyspark.sql import DataFrame
+
 
 ### DF delitos
 
@@ -353,10 +356,31 @@ def join_delitosEducacion(df_delitos, df_educacion):
     
     return df_delitosEducation
 
-def join_todo(join_delitosEducacion, df_ingreso, df_idh, df_ev, df_ibm, df_idc):
-    pass
+def join_todo(df_delitosEducation, df_idh, df_ingreso, df_ev, df_idc, df_ibm):
+    
+    dfs_to_join = [df_delitosEducation, df_idh, df_ingreso, df_ev, df_idc, df_ibm]
 
-def escribir_BaseDatos():
+# Perform successive joins on 'Canton'
+    df_merged = reduce(lambda left, right: left.join(right, on="Canton", how="inner"), dfs_to_join)
+
+    # Show result
+    df_merged = df_merged.dropna()
+
+    df_merged.orderBy("Total_Asaltos", ascending=False).display()
+    
+    return df_merged
+
+def escribir_BaseDatos(df_final):
+    
+    df_final.write \
+    .format("jdbc") \
+    .mode('overwrite') \
+    .option("url", "jdbc:postgresql://172.17.0.1:5433/postgres") \
+    .option("user", "postgres") \
+    .option("password", "testPassword") \
+    .option("dbtable", "DatosUnidos") \
+    .save()
+    
     pass
 
 

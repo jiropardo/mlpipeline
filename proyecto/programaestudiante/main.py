@@ -1,6 +1,13 @@
+import findspark
 import sys
 from pyspark.sql import SparkSession
 from funciones.procesamiento import crear_DF_Delitos, crear_DF_Educacion ,  crear_DF_Ingreso, crear_DF_idh, crear_DF_ev, crear_DF_ibm, crear_DF_idc, join_delitosEducacion, join_todo, escribir_BaseDatos
+
+from pyspark.sql.types import (StringType, IntegerType, FloatType, 
+                               DecimalType, StructField, StructType, DoubleType)
+
+
+findspark.init('/usr/lib/python3.7/site-packages/pyspark')
 
 def main():
     if len(sys.argv) != 9:
@@ -15,8 +22,13 @@ def main():
     path_IC = sys.argv[6]
     path_Esperanzadevida = sys.argv[7]
     path_IDH = sys.argv[8]
-
-    spark = SparkSession.builder.appName("Programa Estudiante").getOrCreate()
+    
+    spark = SparkSession \
+    .builder \
+    .appName("Programa Estudiante") \
+    .config("spark.driver.extraClassPath", "postgresql-42.2.14.jar") \
+    .config("spark.executor.extraClassPath", "postgresql-42.2.14.jar") \
+    .getOrCreate()
 
     #Creacion de DataFrames
     
@@ -54,13 +66,17 @@ def main():
     ## Join Delitos y Educacion
     df_delitosEducacion = join_delitosEducacion(df_delitos, df_educacion)
     
-    df_delitosEducacion.show(5)
+    # df_delitosEducacion.show(5)
     
     ## join_delitosEducacion con indices
     
-    # df_final = join_todo(df_delitosEducacion, df_ingreso, df_idh, df_ev, df_ibm, df_idc) 
+    df_final = join_todo(df_delitosEducacion, df_ingreso, df_idh, df_ev, df_ibm, df_idc) 
+    
+    df_final.show(5)
     
     # escribir Datos
+    
+    escribir_BaseDatos(df_final)
   
     spark.stop()
 
