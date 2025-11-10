@@ -1,7 +1,7 @@
 import findspark
 import sys
 from pyspark.sql import SparkSession
-from funciones.procesamiento import crear_DF_Delitos, crear_DF_Educacion ,  crear_DF_Ingreso, crear_DF_idh, crear_DF_ev, crear_DF_ibm, crear_DF_idc, join_delitosEducacion, join_todo, escribir_BaseDatos
+from funciones.procesamiento import crear_DF_Delitos, crear_DF_Educacion ,  crear_DF_Ingreso, crear_DF_idh, crear_DF_ev, crear_DF_ibm, crear_DF_idc, join_delitosEducacion, join_todo
 
 from pyspark.sql.types import (StringType, IntegerType, FloatType, 
                                DecimalType, StructField, StructType, DoubleType)
