@@ -98,7 +98,6 @@ def main():
     .option("user", "postgres") \
     .option("password", "testPassword") \
     .option("dbtable", "DatosUnidos") \
-    .option("driver", "org.postgresql.Driver") \
     .save()
   
     spark.stop()
