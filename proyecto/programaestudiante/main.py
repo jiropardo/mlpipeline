@@ -7,8 +7,6 @@ from pyspark.sql.types import (StringType, IntegerType, FloatType,
                                DecimalType, StructField, StructType, DoubleType)
 
 
-#findspark.init('/usr/lib/python3.7/site-packages/pyspark')
-
 def main():
     if len(sys.argv) != 9:
         print("Uso: main.py AsaltosUltimoAnio.csv Ingresopromedioestimado.csv Educacionedad.csv IBM.csv Educacionsexo.csv IC.csv Esperanzadevida.csv IDH.csv")
@@ -23,11 +21,16 @@ def main():
     path_Esperanzadevida = sys.argv[7]
     path_IDH = sys.argv[8]
     
-    spark = SparkSession \
-    .builder \
+    # spark = SparkSession \
+    # .builder \
+    # .appName("Programa Estudiante") \
+    # .config("spark.driver.extraClassPath", "postgresql-42.2.14.jar") \
+    # .config("spark.executor.extraClassPath", "postgresql-42.2.14.jar") \
+    # .getOrCreate()
+    
+    spark = SparkSession.builder \
     .appName("Programa Estudiante") \
-    .config("spark.driver.extraClassPath", "postgresql-42.2.14.jar") \
-    .config("spark.executor.extraClassPath", "postgresql-42.2.14.jar") \
+    .config("spark.jars", "/src/sparkml/proyecto/programaestudiante/postgresql-42.2.14.jar") \
     .getOrCreate()
 
     #Creacion de DataFrames
@@ -77,11 +80,12 @@ def main():
     # escribir Datos
     df_final.write \
     .format("jdbc") \
-    .mode('overwrite') \
+    .mode("overwrite") \
     .option("url", "jdbc:postgresql://172.17.0.1:5433/postgres") \
     .option("user", "postgres") \
     .option("password", "testPassword") \
     .option("dbtable", "DatosUnidos") \
+    .option("driver", "org.postgresql.Driver") \
     .save()
   
     spark.stop()
