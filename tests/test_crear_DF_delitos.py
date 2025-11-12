@@ -48,7 +48,10 @@ ROBO,ROBO CON ARMA,,Persona,Adulto,3,45,M,Ecuatoriano,Guayas,Guayaquil
     total_si = sum(r["Total_Asaltos"] for r in result_data if r["ASALTO_ARMADO"] == "SI")
     total_no = sum(r["Total_Asaltos"] for r in result_data if r["ASALTO_ARMADO"] == "NO")
 
-    assert total_si == 2  # 2 registros con ROBO CON ARMA
-    assert total_no == 1  # 1 registro con ROBO SIN ARMA
+    # Deben coincidir con la suma de los conteos de cada tipo
+    assert total_si == 2  # ROBO CON ARMA: 1 + 1
+    assert total_no == 1  # ROBO SIN ARMA: 1
 
-  
+    # Opcional: imprimir para depuración
+    for r in result_data:
+        print(r)
