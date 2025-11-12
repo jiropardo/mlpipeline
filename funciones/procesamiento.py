@@ -70,7 +70,6 @@ def crear_DF_Delitos(spark, path_AsaltosUltimoAnio=None, df=None):
     )
 
     return  df_delitos
-    #return ciclistas_df, rutas_df, actividades_df
 
 #### DF_Educacion
 

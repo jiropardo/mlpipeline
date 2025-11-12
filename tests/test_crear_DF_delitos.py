@@ -4,34 +4,23 @@ from pyspark.sql.functions import col, when
 from funciones.procesamiento import crear_DF_Delitos
 
 def test_crear_DF_Delitos():
-    from pyspark.sql import SparkSession
-    from pyspark.sql.types import StructType, StructField, StringType, IntegerType, DateType
-
     spark = SparkSession.builder.master("local[1]").appName("pytest_crear_DF_Delitos").getOrCreate()
 
-    data = [
-        ("ROBO", "ROBO CON ARMA", None, "Persona", "Adulto", 1, "25", "M", "Ecuatoriano", "Pichincha", "Quito"),
-        ("ROBO", "ROBO SIN ARMA", None, "Persona", "Adulto", 2, "30", "F", "Ecuatoriano", "Pichincha", "Quito"),
-        ("ROBO", "ROBO CON ARMA", None, "Persona", "Adulto", 3, "45", "M", "Ecuatoriano", "Guayas", "Guayaquil"),
-    ]
+    # Simulamos un CSV en memoria
+    csv_data = """Delito,SubDelito,Fecha,Victima,SubVictima,x,Edad,Sexo,Nacionalidad,Provincia,Canton
+ROBO,ROBO CON ARMA,,Persona,Adulto,1,25,M,Ecuatoriano,Pichincha,Quito
+ROBO,ROBO SIN ARMA,,Persona,Adulto,2,30,F,Ecuatoriano,Pichincha,Quito
+ROBO,ROBO CON ARMA,,Persona,Adulto,3,45,M,Ecuatoriano,Guayas,Guayaquil
+"""
 
-    schema = StructType([
-        StructField("Delito", StringType(), True),
-        StructField("SubDelito", StringType(), True),
-        StructField("Fecha", DateType(), True),
-        StructField("Victima", StringType(), True),
-        StructField("SubVictima", StringType(), True),
-        StructField("x", IntegerType(), True),
-        StructField("Edad", StringType(), True),
-        StructField("Sexo", StringType(), True),
-        StructField("Nacionalidad", StringType(), True),
-        StructField("Provincia", StringType(), True),
-        StructField("Canton", StringType(), True),
-    ])
+    # Guardar CSV temporal
+    with tempfile.NamedTemporaryFile(mode="w+", delete=False, suffix=".csv") as f:
+        f.write(csv_data)
+        temp_path = f.name
 
-    df_input = spark.createDataFrame(data, schema=schema)
-
-    result_df = crear_DF_Delitos(spark, df=df_input)
+    # Ejecutar función usando el path temporal
+    from funciones.procesamiento import crear_DF_Delitos
+    result_df = crear_DF_Delitos(spark, temp_path)
 
     # Verificaciones simples
     result_data = [row.asDict() for row in result_df.collect()]
