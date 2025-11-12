@@ -5,6 +5,7 @@ from funciones.procesamiento import crear_DF_Delitos
 from io import StringIO
 import tempfile
 
+
 def test_crear_DF_Delitos():
     # Crear SparkSession
     spark = SparkSession.builder.master("local[1]").appName("pytest_crear_DF_Delitos").getOrCreate()
@@ -37,6 +38,3 @@ ROBO,ROBO CON ARMA,,Persona,Adulto,3,45,M,Ecuatoriano,Guayas,Guayaquil
 
     assert total_si == 2  # 1 + 1 de las filas con ASALTO_ARMADO="SI"
     assert total_no == 1   # 1 de la fila con ASALTO_ARMADO="NO"
-
-    
-    
