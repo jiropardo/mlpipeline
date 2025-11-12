@@ -7,6 +7,9 @@ from pyspark.sql.types import StructType, StructField, StringType, DateType, Int
 from funciones.procesamiento import crear_DF_Delitos  # Ajusta la importación según tu proyecto
 from pyspark.sql import Row
 import datetime
+import tempfile
+import os
+from funciones.procesamiento import crear_DF_Delito
 
 
 def test_crear_DF_Delitos_csv(spark):
