@@ -11,7 +11,7 @@ from pyspark.sql import DataFrame
 
 ### DF delitos
 
-def crear_DF_Delitos(spark, path_AsaltosUltimoAnio):
+def crear_DF_Delitos(spark, path_AsaltosUltimoAnio=None, df=None):
     """
     Lee los CSV sin header y limpia los datso de delitos
     """
