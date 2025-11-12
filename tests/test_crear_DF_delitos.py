@@ -1,15 +1,13 @@
 from pyspark.sql import SparkSession
 from pyspark.sql.types import StructType, StructField, StringType, IntegerType, DataType, DateType
 from pyspark.sql.functions import col, when
-from funciones.procesamiento import crear_DF_Delitos
 
 from pyspark.sql.types import StructType, StructField, StringType, DateType, IntegerType
-from funciones.procesamiento import crear_DF_Delitos  # Ajusta la importación según tu proyecto
 from pyspark.sql import Row
 import datetime
 import tempfile
 import os
-from funciones.procesamiento import crear_DF_Delito
+from funciones.procesamiento import crear_DF_Delitos
 
 
 def test_crear_DF_Delitos_csv(spark):
