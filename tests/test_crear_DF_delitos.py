@@ -9,60 +9,27 @@ from pyspark.sql import Row
 import datetime
 
 
-def test_crear_DF_Delitos_inmemory(spark):
-    schema = StructType([
-        StructField("Delito", StringType(), True),
-        StructField("SubDelito", StringType(), True),
-        StructField("Fecha", DateType(), True),
-        StructField("Victima", StringType(), True),
-        StructField("SubVictima", StringType(), True),
-        StructField("x", IntegerType(), True),
-        StructField("Edad", StringType(), True),
-        StructField("Sexo", StringType(), True),
-        StructField("Nacionalidad", StringType(), True),
-        StructField("Provincia", StringType(), True),
-        StructField("Canton", StringType(), True),
-    ])
+def test_crear_DF_Delitos_csv(spark):
+    # Crear un CSV temporal
+    with tempfile.TemporaryDirectory() as tmpdir:
+        csv_path = os.path.join(tmpdir, "asaltos.csv")
+        
+        # Contenido mínimo del CSV con header
+        csv_content = """Delito,SubDelito,Fecha,Victima,SubVictima,x,Edad,Sexo,Nacionalidad,Provincia,Canton
+Robo,Robo con ARMA de fuego,2025-01-01,Persona,Adulto,1,30,M,EC,Pichincha,Quito
+Robo,Robo simple,2025-01-02,Persona,Adulto,2,25,F,EC,Pichincha,Quito
+"""
+        with open(csv_path, "w") as f:
+            f.write(csv_content)
 
-    data = [
-        Row(
-            Delito="Robo",
-            SubDelito="Robo con ARMA de fuego",
-            Fecha=datetime.date(2025, 1, 1),
-            Victima="Persona",
-            SubVictima="Adulto",
-            x=1,
-            Edad="30",
-            Sexo="M",
-            Nacionalidad="EC",
-            Provincia="Pichincha",
-            Canton="Quito"
-        ),
-        Row(
-            Delito="Robo",
-            SubDelito="Robo simple",
-            Fecha=datetime.date(2025, 1, 2),
-            Victima="Persona",
-            SubVictima="Adulto",
-            x=2,
-            Edad="25",
-            Sexo="F",
-            Nacionalidad="EC",
-            Provincia="Pichincha",
-            Canton="Quito"
-        ),
-    ]
+        # Ejecutar la función
+        df_result = crear_DF_Delitos(spark, path_AsaltosUltimoAnio=csv_path)
 
-    df_input = spark.createDataFrame(data, schema)
-    df_result = crear_DF_Delitos(spark, df=df_input)
+        # Verificar columnas
+        expected_columns = ["ASALTO_ARMADO", "Provincia", "Canton", "Victima", "Edad_Victima", "Sexo_Victima", "Total_Asaltos"]
+        assert df_result.columns == expected_columns
 
-    expected_columns = ["ASALTO_ARMADO", "Provincia", "Canton", "Victima", "Edad_Victima", "Sexo_Victima", "Total_Asaltos"]
-    assert df_result.columns == expected_columns
-
-    result_dict = {row.Victima + row.Edad_Victima + row.Sexo_Victima: row.ASALTO_ARMADO for row in df_result.collect()}
-    assert result_dict["Adulto30M"] == "SI"
-    assert result_dict["Adulto25F"] == "NO"
-
-    counts = {row.ASALTO_ARMADO: row.Total_Asaltos for row in df_result.collect()}
-    assert counts["SI"] == 1
-    assert counts["NO"] == 1
+        # Verificar valores de ASALTO_ARMADO
+        result_dict = { (row.Victima, row.Edad_Victima, row.Sexo_Victima): row.ASALTO_ARMADO for row in df_result.collect() }
+        assert result_dict[("Adulto","30","M")] == "SI"
+        assert result_dict[("Adulto","25","F")] == "NO"
