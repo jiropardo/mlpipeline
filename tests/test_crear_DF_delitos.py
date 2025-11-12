@@ -31,9 +31,12 @@ ROBO,ROBO CON ARMA,,Persona,Adulto,3,45,M,Ecuatoriano,Guayas,Guayaquil
     expected_cols = ["ASALTO_ARMADO", "Provincia", "Canton", "Victima", "Edad_Victima", "Sexo_Victima", "Total_Asaltos"]
     assert all(c in result_df.columns for c in expected_cols)
 
-    # Verificar conteo de ASALTO_ARMADO
-    si_count = sum(1 for r in result_data if r["ASALTO_ARMADO"] == "SI")
-    no_count = sum(1 for r in result_data if r["ASALTO_ARMADO"] == "NO")
+    # Verificar total de asaltos por tipo
+    total_si = sum(r["Total_Asaltos"] for r in result_data if r["ASALTO_ARMADO"] == "SI")
+    total_no = sum(r["Total_Asaltos"] for r in result_data if r["ASALTO_ARMADO"] == "NO")
 
-    assert si_count == 2
-    assert no_count == 1
+    assert total_si == 2  # 1 + 1 de las filas con ASALTO_ARMADO="SI"
+    assert total_no == 1   # 1 de la fila con ASALTO_ARMADO="NO"
+
+    
+    
