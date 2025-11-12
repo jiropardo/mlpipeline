@@ -6,3 +6,6 @@ docker run -it -p 8889:8889 albertopozosdelrio/bigdata:v2 /bin/bash
 cd /src/sparkml
 
 spark-submit --jars /src/sparkml/postgresql-42.2.14.jar main.py AsaltosUltimoAnio.csv Ingresopromedioestimado.csv Educacionedad.csv IBM.csv Educacionsexo.csv IC.csv Esperanzadevida.csv IDH.csv
+
+
+44.200.150.62
