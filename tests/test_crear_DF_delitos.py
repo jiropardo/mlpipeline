@@ -2,6 +2,8 @@ from pyspark.sql import SparkSession
 from pyspark.sql.types import StructType, StructField, StringType, IntegerType, DataType, DateType
 from pyspark.sql.functions import col, when
 from funciones.procesamiento import crear_DF_Delitos
+from io import StringIO
+import tempfile
 
 def test_crear_DF_Delitos():
     spark = SparkSession.builder.master("local[1]").appName("pytest_crear_DF_Delitos").getOrCreate()
