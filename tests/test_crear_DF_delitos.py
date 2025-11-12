@@ -1,7 +1,8 @@
 import pytest
 from pyspark.sql import Row
 from funciones.procesamiento import crear_DF_Delitos
-from pyspark.sql.types import StructType, StructField, StringType, IntegerType, BooleanType , DateType
+from pyspark.sql.types import StructType, StructField, StringType, IntegerType, BooleanType , DateType  
+from pyspark.sql.functions import col, when
 
 def test_crear_DF_Delitos_direct_dataframe(spark):
     """
