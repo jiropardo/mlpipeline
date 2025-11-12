@@ -6,8 +6,12 @@ from io import StringIO
 import tempfile
 
 
+import tempfile
+from pyspark.sql import SparkSession
+from funciones.procesamiento import crear_DF_Delitos
+
 def test_crear_DF_Delitos():
-    # Crear SparkSession
+    # Crear SparkSession local
     spark = SparkSession.builder.master("local[1]").appName("pytest_crear_DF_Delitos").getOrCreate()
 
     # CSV simulado en memoria
@@ -25,7 +29,7 @@ ROBO,ROBO CON ARMA,,Persona,Adulto,3,45,M,Ecuatoriano,Guayas,Guayaquil
     # Ejecutar la función con el path temporal
     result_df = crear_DF_Delitos(spark, temp_path)
 
-    # Convertir a lista de diccionarios para verificar
+    # Convertir a lista de diccionarios
     result_data = [row.asDict() for row in result_df.collect()]
 
     # Columnas esperadas
@@ -40,15 +44,11 @@ ROBO,ROBO CON ARMA,,Persona,Adulto,3,45,M,Ecuatoriano,Guayas,Guayaquil
     ]
     assert all(c in result_df.columns for c in expected_cols)
 
-    # Contar filas según ASALTO_ARMADO
-    asaltos_agrupados = {}
-    for r in result_data:
-        key = r["ASALTO_ARMADO"]
-        asaltos_agrupados[key] = asaltos_agrupados.get(key, 0) + 1
+    # Verificar el total de asaltos según ASALTO_ARMADO
+    total_si = sum(r["Total_Asaltos"] for r in result_data if r["ASALTO_ARMADO"] == "SI")
+    total_no = sum(r["Total_Asaltos"] for r in result_data if r["ASALTO_ARMADO"] == "NO")
 
-    # Verificar combinaciones únicas según la salida de la función
-    assert asaltos_agrupados.get("SI", 0) == 2  # filas únicas con ASALTO_ARMADO="SI"
-    assert asaltos_agrupados.get("NO", 0) == 1  # filas únicas con ASALTO_ARMADO="NO"
+    assert total_si == 2  # 2 registros con ROBO CON ARMA
+    assert total_no == 1  # 1 registro con ROBO SIN ARMA
 
-    # Cerrar Spark
-    spark.stop()
+  
