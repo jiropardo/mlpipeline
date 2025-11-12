@@ -2,56 +2,52 @@ from pyspark.sql import SparkSession
 from pyspark.sql.types import StructType, StructField, StringType, IntegerType, DataType, DateType
 from pyspark.sql.functions import col, when
 from funciones.procesamiento import crear_DF_Delitos
-from io import StringIO
-import tempfile
+
+from pyspark.sql.types import StructType, StructField, StringType, DateType, IntegerType
+from funciones.procesamiento import crear_DF_Delitos  # Ajusta la importación según tu proyecto
+from pyspark.sql import Row
 
 
-import tempfile
-from pyspark.sql import SparkSession
-from funciones.procesamiento import crear_DF_Delitos
+def test_crear_DF_Delitos(spark):
+    # --- 1️⃣ Creamos un DataFrame de prueba en memoria
+    schema = StructType([
+        StructField("Delito", StringType(), True),
+        StructField("SubDelito", StringType(), True),
+        StructField("Fecha", DateType(), True),
+        StructField("Victima", StringType(), True),
+        StructField("SubVictima", StringType(), True),
+        StructField("x", IntegerType(), True),
+        StructField("Edad", StringType(), True),
+        StructField("Sexo", StringType(), True),
+        StructField("Nacionalidad", StringType(), True),
+        StructField("Provincia", StringType(), True),
+        StructField("Canton", StringType(), True),
+    ])
 
-def test_crear_DF_Delitos():
-    import tempfile
-    from pyspark.sql import SparkSession
-    from funciones.procesamiento import crear_DF_Delitos
-
-    # Crear SparkSession local
-    spark = SparkSession.builder.master("local[1]").appName("pytest_crear_DF_Delitos").getOrCreate()
-
-    # CSV simulado en memoria
-    csv_data = """Delito,SubDelito,Fecha,Victima,SubVictima,x,Edad,Sexo,Nacionalidad,Provincia,Canton
-ROBO,ROBO CON ARMA,,Persona,Adulto,1,25,M,Ecuatoriano,Pichincha,Quito
-ROBO,ROBO SIN ARMA,,Persona,Adulto,2,30,F,Ecuatoriano,Pichincha,Quito
-ROBO,ROBO CON ARMA,,Persona,Adulto,3,45,M,Ecuatoriano,Guayas,Guayaquil
-"""
-
-    # Guardar CSV temporal
-    with tempfile.NamedTemporaryFile(mode="w+", delete=False, suffix=".csv") as f:
-        f.write(csv_data)
-        temp_path = f.name
-
-    # Ejecutar la función con el path temporal
-    result_df = crear_DF_Delitos(spark, temp_path)
-
-    # Convertir a lista de diccionarios
-    result_data = [row.asDict() for row in result_df.collect()]
-
-    # Columnas esperadas
-    expected_cols = [
-        "ASALTO_ARMADO",
-        "Provincia",
-        "Canton",
-        "Victima",
-        "Edad_Victima",
-        "Sexo_Victima",
-        "Total_Asaltos"
+    data = [
+        Row(Delito="Robo", SubDelito="Robo con ARMA de fuego", Fecha="2025-01-01",
+            Victima="Persona", SubVictima="Adulto", x=1, Edad="30", Sexo="M",
+            Nacionalidad="EC", Provincia="Pichincha", Canton="Quito"),
+        Row(Delito="Robo", SubDelito="Robo simple", Fecha="2025-01-02",
+            Victima="Persona", SubVictima="Adulto", x=2, Edad="25", Sexo="F",
+            Nacionalidad="EC", Provincia="Pichincha", Canton="Quito"),
     ]
-    assert all(c in result_df.columns for c in expected_cols)
 
-    # Verificar el total de asaltos según ASALTO_ARMADO
-    total_si = sum(r["Total_Asaltos"] for r in result_data if r["ASALTO_ARMADO"] == "SI")
-    total_no = sum(r["Total_Asaltos"] for r in result_data if r["ASALTO_ARMADO"] == "NO")
+    df_input = spark.createDataFrame(data, schema)
 
-    # Deben coincidir con la suma de los conteos
-    assert total_si == 2  # ROBO CON ARMA: 1 + 1
-    assert total_no == 1  # ROBO SIN ARMA: 1
+    # --- 2️⃣ Ejecutamos la función
+    df_result = crear_DF_Delitos(spark, df=df_input, path_AsaltosUltimoAnio=None)
+
+    # --- 3️⃣ Verificamos columnas y contenido
+    expected_columns = ["ASALTO_ARMADO", "Provincia", "Canton", "Victima", "Edad_Victima", "Sexo_Victima", "Total_Asaltos"]
+    assert df_result.columns == expected_columns
+
+    # Revisamos que la columna ASALTO_ARMADO esté correctamente mapeada
+    result_dict = {row.Victima + row.Edad_Victima + row.Sexo_Victima: row.ASALTO_ARMADO for row in df_result.collect()}
+    assert result_dict["Adulto30M"] == "SI"
+    assert result_dict["Adulto25F"] == "NO"
+
+    # Verificamos que la agregación (Total_Asaltos) sea correcta
+    counts = {row.ASALTO_ARMADO: row.Total_Asaltos for row in df_result.collect()}
+    assert counts["SI"] == 1
+    assert counts["NO"] == 1
