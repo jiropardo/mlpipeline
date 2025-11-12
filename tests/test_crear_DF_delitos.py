@@ -10,7 +10,6 @@ import datetime
 
 
 def test_crear_DF_Delitos_inmemory(spark):
-    # --- 1️⃣ Creamos un DataFrame de prueba en memoria
     schema = StructType([
         StructField("Delito", StringType(), True),
         StructField("SubDelito", StringType(), True),
@@ -29,7 +28,7 @@ def test_crear_DF_Delitos_inmemory(spark):
         Row(
             Delito="Robo",
             SubDelito="Robo con ARMA de fuego",
-            Fecha=datetime.date(2025, 1, 1),  # ✅ debe ser datetime.date
+            Fecha=datetime.date(2025, 1, 1),
             Victima="Persona",
             SubVictima="Adulto",
             x=1,
@@ -42,7 +41,7 @@ def test_crear_DF_Delitos_inmemory(spark):
         Row(
             Delito="Robo",
             SubDelito="Robo simple",
-            Fecha=datetime.date(2025, 1, 2),  # ✅ debe ser datetime.date
+            Fecha=datetime.date(2025, 1, 2),
             Victima="Persona",
             SubVictima="Adulto",
             x=2,
@@ -55,20 +54,15 @@ def test_crear_DF_Delitos_inmemory(spark):
     ]
 
     df_input = spark.createDataFrame(data, schema)
-
-    # --- 2️⃣ Ejecutamos la función usando df= para evitar CSV
     df_result = crear_DF_Delitos(spark, df=df_input)
 
-    # --- 3️⃣ Verificamos columnas y contenido
     expected_columns = ["ASALTO_ARMADO", "Provincia", "Canton", "Victima", "Edad_Victima", "Sexo_Victima", "Total_Asaltos"]
     assert df_result.columns == expected_columns
 
-    # Verificar transformación "SubDelito -> ASALTO_ARMADO"
     result_dict = {row.Victima + row.Edad_Victima + row.Sexo_Victima: row.ASALTO_ARMADO for row in df_result.collect()}
     assert result_dict["Adulto30M"] == "SI"
     assert result_dict["Adulto25F"] == "NO"
 
-    # Verificar agregación (Total_Asaltos)
     counts = {row.ASALTO_ARMADO: row.Total_Asaltos for row in df_result.collect()}
     assert counts["SI"] == 1
     assert counts["NO"] == 1
