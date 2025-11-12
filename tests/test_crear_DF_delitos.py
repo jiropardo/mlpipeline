@@ -6,9 +6,10 @@ from io import StringIO
 import tempfile
 
 def test_crear_DF_Delitos():
+    # Crear SparkSession
     spark = SparkSession.builder.master("local[1]").appName("pytest_crear_DF_Delitos").getOrCreate()
 
-    # Simulamos un CSV en memoria
+    # CSV simulado en memoria
     csv_data = """Delito,SubDelito,Fecha,Victima,SubVictima,x,Edad,Sexo,Nacionalidad,Provincia,Canton
 ROBO,ROBO CON ARMA,,Persona,Adulto,1,25,M,Ecuatoriano,Pichincha,Quito
 ROBO,ROBO SIN ARMA,,Persona,Adulto,2,30,F,Ecuatoriano,Pichincha,Quito
@@ -20,15 +21,19 @@ ROBO,ROBO CON ARMA,,Persona,Adulto,3,45,M,Ecuatoriano,Guayas,Guayaquil
         f.write(csv_data)
         temp_path = f.name
 
-    # Ejecutar función usando el path temporal
-    from funciones.procesamiento import crear_DF_Delitos
+    # Ejecutar la función con el path temporal
     result_df = crear_DF_Delitos(spark, temp_path)
 
-    # Verificaciones simples
+    # Convertir a lista de diccionarios para verificar
     result_data = [row.asDict() for row in result_df.collect()]
+
+    # Columnas esperadas
     expected_cols = ["ASALTO_ARMADO", "Provincia", "Canton", "Victima", "Edad_Victima", "Sexo_Victima", "Total_Asaltos"]
     assert all(c in result_df.columns for c in expected_cols)
-    assert len([r for r in result_data if r["ASALTO_ARMADO"] == "SI"]) == 2
-    assert len([r for r in result_data if r["ASALTO_ARMADO"] == "NO"]) == 1
 
-    spark.stop()
+    # Verificar conteo de ASALTO_ARMADO
+    si_count = sum(1 for r in result_data if r["ASALTO_ARMADO"] == "SI")
+    no_count = sum(1 for r in result_data if r["ASALTO_ARMADO"] == "NO")
+
+    assert si_count == 2
+    assert no_count == 1
