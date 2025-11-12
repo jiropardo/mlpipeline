@@ -11,6 +11,10 @@ from pyspark.sql import SparkSession
 from funciones.procesamiento import crear_DF_Delitos
 
 def test_crear_DF_Delitos():
+    import tempfile
+    from pyspark.sql import SparkSession
+    from funciones.procesamiento import crear_DF_Delitos
+
     # Crear SparkSession local
     spark = SparkSession.builder.master("local[1]").appName("pytest_crear_DF_Delitos").getOrCreate()
 
@@ -48,10 +52,6 @@ ROBO,ROBO CON ARMA,,Persona,Adulto,3,45,M,Ecuatoriano,Guayas,Guayaquil
     total_si = sum(r["Total_Asaltos"] for r in result_data if r["ASALTO_ARMADO"] == "SI")
     total_no = sum(r["Total_Asaltos"] for r in result_data if r["ASALTO_ARMADO"] == "NO")
 
-    # Deben coincidir con la suma de los conteos de cada tipo
+    # Deben coincidir con la suma de los conteos
     assert total_si == 2  # ROBO CON ARMA: 1 + 1
     assert total_no == 1  # ROBO SIN ARMA: 1
-
-    # Opcional: imprimir para depuración
-    for r in result_data:
-        print(r)
