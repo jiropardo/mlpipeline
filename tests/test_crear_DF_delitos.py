@@ -1,17 +1,22 @@
 from pyspark.sql import SparkSession
 from pyspark.sql.types import StructType, StructField, StringType, IntegerType
 from pyspark.sql.functions import col, when
+from funciones.procesamiento import crear_DF_Delitos
 
-def test_crear_DF_Delitos_direct_dataframe(spark):
-    """
-    Test de la función crear_DF_Delitos usando DataFrames creados directamente en memoria.
-    """
+def test_crear_DF_Delitos(spark):
+    spark = SparkSession.builder.master("local[1]").appName("pytest_crear_DF_Delitos").getOrCreate()
 
-    # --- 1️⃣ Crear DataFrame de entrada que imite el CSV original
+    # Datos simulados de entrada
+    data = [
+        ("ROBO", "ROBO CON ARMA", None, "Persona", "Adulto", 1, "25", "M", "Ecuatoriano", "Pichincha", "Quito"),
+        ("ROBO", "ROBO SIN ARMA", None, "Persona", "Adulto", 2, "30", "F", "Ecuatoriano", "Pichincha", "Quito"),
+        ("ROBO", "ROBO CON ARMA", None, "Persona", "Adulto", 3, "45", "M", "Ecuatoriano", "Guayas", "Guayaquil"),
+    ]
+
     schema = StructType([
         StructField("Delito", StringType(), True),
         StructField("SubDelito", StringType(), True),
-        StructField("Fecha", StringType(), True),
+        StructField("Fecha", DateType(), True),
         StructField("Victima", StringType(), True),
         StructField("SubVictima", StringType(), True),
         StructField("x", IntegerType(), True),
@@ -22,56 +27,26 @@ def test_crear_DF_Delitos_direct_dataframe(spark):
         StructField("Canton", StringType(), True),
     ])
 
-    # --- 2️⃣ Datos de ejemplo (uno con “ARMA” → “SI”, y otro sin → “NO”)
-    data = [
-        ("ASALTO", "Asalto con arma blanca", "2024-10-10", "Persona", "Peatón", 1, "25", "M", "Ecuatoriano", "Pichincha", "Quito"),
-        ("ASALTO", "Asalto sin arma", "2024-10-12", "Persona", "Peatón", 2, "40", "F", "Ecuatoriano", "Pichincha", "Quito"),
-        ("ASALTO", "Robo con arma de fuego", "2024-11-01", "Persona", "Cliente", 3, "30", "M", "Ecuatoriano", "Guayas", "Guayaquil"),
-        ("ASALTO", "Hurto simple", "2024-11-02", "Persona", "Cliente", 4, "22", "F", "Ecuatoriano", "Guayas", "Daule"),  # este debe dar "NO"
-    ]
     df_input = spark.createDataFrame(data, schema=schema)
 
-    # --- 3️⃣ Aplicar la misma lógica que en crear_DF_Delitos
-    delitos2 = df_input.select("SubDelito", "Provincia", "Canton", "SubVictima", "Edad", "Sexo")
-    delitos2 = (
-        delitos2
-        .withColumnRenamed("SubVictima", "Victima")
-        .withColumnRenamed("Edad", "Edad_Victima")
-        .withColumnRenamed("Sexo", "Sexo_Victima")
-    )
+    # Ejecutar función
+    result_df = crear_DF_Delitos(spark, df_input.collect())
 
-    delitos2 = delitos2.withColumn(
-        "SubDelito",
-        when(col("SubDelito").rlike("(?i)ARMA"), "SI").otherwise("NO")
-    )
+    # Convertir a colección Python para verificar
+    result_data = [row.asDict() for row in result_df.collect()]
 
-    delitos2 = (
-        delitos2
-        .groupBy("SubDelito", "Provincia", "Canton", "Victima", "Edad_Victima", "Sexo_Victima")
-        .count()
-        .withColumnRenamed("count", "Total_Asaltos")
-        .orderBy("Total_Asaltos", ascending=False)
-    )
+    # --- 🔸 Verificaciones ---
+    # 1️⃣ Asegurar que las columnas esperadas existan
+    expected_cols = ["ASALTO_ARMADO", "Provincia", "Canton", "Victima", "Edad_Victima", "Sexo_Victima", "Total_Asaltos"]
+    assert all(c in result_df.columns for c in expected_cols)
 
-    df_result = delitos2.withColumnRenamed("SubDelito", "ASALTO_ARMADO")
+    # 2️⃣ Verificar conteos correctos
+    si_rows = [r for r in result_data if r["ASALTO_ARMADO"] == "SI"]
+    no_rows = [r for r in result_data if r["ASALTO_ARMADO"] == "NO"]
 
-    # --- 4️⃣ Validaciones
-    expected_cols = {
-        "ASALTO_ARMADO",
-        "Provincia",
-        "Canton",
-        "Victima",
-        "Edad_Victima",
-        "Sexo_Victima",
-        "Total_Asaltos",
-    }
-    assert set(df_result.columns) == expected_cols, "❌ Las columnas no coinciden con las esperadas."
+    assert len(si_rows) == 2   # Dos filas con arma
+    assert len(no_rows) == 1   # Una sin arma
+    assert all("Total_Asaltos" in r for r in result_data)
 
-    rows = df_result.collect()
-
-    # --- 5️⃣ Verificar que haya tanto 'SI' como 'NO'
-    armado_vals = [r["ASALTO_ARMADO"] for r in rows]
-    assert "SI" in armado_vals, "❌ No se encontró ningún caso con ASALTO_ARMADO = SI"
-    assert "NO" in armado_vals, "❌ No se encontró ningún caso con ASALTO_ARMADO = NO"
-
-    print("✅ Test crear_DF_Delitos_direct_dataframe pasó correctamente.")
+    # 3️⃣ Asegurar que Total_Asaltos sea numérico y positivo
+    assert all(r["Total_Asaltos"] > 0 for r in result_data)
