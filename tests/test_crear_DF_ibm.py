@@ -1,36 +1,31 @@
+import pytest
 from pyspark.sql import SparkSession
-from pyspark.sql.types import StructType, StructField, StringType, IntegerType, DataType, DateType
-from pyspark.sql.functions import col, when
-
-from pyspark.sql.types import StructType, StructField, StringType, DateType, IntegerType
-from pyspark.sql import Row
-import datetime
 import tempfile
 import os
-from funciones.procesamiento import crear_DF_Delitos
+from pyspark.sql.functions import col, upper, translate
+from funciones.procesamiento import crear_DF_ibm
 
 
-def test_crear_DF_Delitos_csv(spark):
-    # Crear un CSV temporal
+def test_crear_DF_ibm_csv(spark):
     with tempfile.TemporaryDirectory() as tmpdir:
-        csv_path = os.path.join(tmpdir, "asaltos.csv")
-        
-        # Contenido mínimo del CSV con header
-        csv_content = """Delito,SubDelito,Fecha,Victima,SubVictima,x,Edad,Sexo,Nacionalidad,Provincia,Canton
-Robo,Robo con ARMA de fuego,2025-01-01,Persona,Adulto,1,30,M,EC,Pichincha,Quito
-Robo,Robo simple,2025-01-02,Persona,Adulto,2,25,F,EC,Pichincha,Quito
+        csv_path = os.path.join(tmpdir, "ibm.csv")
+
+        # CSV mínimo de ejemplo
+        csv_content = """Canton;2010;2011;2012;2013;2014;2015;2016;2017;2018;2019;2020
+Quito;50;51;52;53;54;55;56;57;58;59;60
+Guayaquil;60;61;62;63;64;65;66;67;68;69;70
 """
         with open(csv_path, "w") as f:
             f.write(csv_content)
 
         # Ejecutar la función
-        df_result = crear_DF_Delitos(spark, path_AsaltosUltimoAnio=csv_path)
+        df_result = crear_DF_ibm(spark, path_IBM=csv_path)
 
         # Verificar columnas
-        expected_columns = ["ASALTO_ARMADO", "Provincia", "Canton", "Victima", "Edad_Victima", "Sexo_Victima", "Total_Asaltos"]
+        expected_columns = ["Canton", "IndiceBienestarMaterial"]
         assert df_result.columns == expected_columns
 
-        # Verificar valores de ASALTO_ARMADO
-        result_dict = { (row.Victima, row.Edad_Victima, row.Sexo_Victima): row.ASALTO_ARMADO for row in df_result.collect() }
-        assert result_dict[("Adulto","30","M")] == "SI"
-        assert result_dict[("Adulto","25","F")] == "NO"
+        # Verificar resultados
+        result_dict = {row.Canton: row.IndiceBienestarMaterial for row in df_result.collect()}
+        assert result_dict["QUITO"] == "60"
+        assert result_dict["GUAYAQUIL"] == "70"

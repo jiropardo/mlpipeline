@@ -1,36 +1,41 @@
+import pytest
 from pyspark.sql import SparkSession
-from pyspark.sql.types import StructType, StructField, StringType, IntegerType, DataType, DateType
-from pyspark.sql.functions import col, when
-
-from pyspark.sql.types import StructType, StructField, StringType, DateType, IntegerType
 from pyspark.sql import Row
-import datetime
-import tempfile
-import os
-from funciones.procesamiento import crear_DF_Delitos
+from pyspark.sql.functions import col
+from funciones.procesamiento import join_delitosEducacion
 
 
-def test_crear_DF_Delitos_csv(spark):
-    # Crear un CSV temporal
-    with tempfile.TemporaryDirectory() as tmpdir:
-        csv_path = os.path.join(tmpdir, "asaltos.csv")
-        
-        # Contenido mínimo del CSV con header
-        csv_content = """Delito,SubDelito,Fecha,Victima,SubVictima,x,Edad,Sexo,Nacionalidad,Provincia,Canton
-Robo,Robo con ARMA de fuego,2025-01-01,Persona,Adulto,1,30,M,EC,Pichincha,Quito
-Robo,Robo simple,2025-01-02,Persona,Adulto,2,25,F,EC,Pichincha,Quito
-"""
-        with open(csv_path, "w") as f:
-            f.write(csv_content)
+def test_join_delitosEducacion(spark):
+    # DataFrame de delitos
+    df_delitos = spark.createDataFrame([
+        Row(Provincia="Pichincha", Canton="Quito", ASALTO_ARMADO="SI",
+            Victima="Adulto", Edad_Victima="30", Sexo_Victima="M", Total_Asaltos=5),
+        Row(Provincia="Guayas", Canton="Guayaquil", ASALTO_ARMADO="NO",
+            Victima="Adulto", Edad_Victima="25", Sexo_Victima="F", Total_Asaltos=3)
+    ])
 
-        # Ejecutar la función
-        df_result = crear_DF_Delitos(spark, path_AsaltosUltimoAnio=csv_path)
+    # DataFrame de educación
+    df_educacion = spark.createDataFrame([
+        Row(Provincia="Pichincha", Canton="Quito", Nivel_Educativo="Primaria",
+            Sexo="M", Total_Personas_Canton=100),
+        Row(Provincia="Guayas", Canton="Guayaquil", Nivel_Educativo="Secundaria",
+            Sexo="F", Total_Personas_Canton=80)
+    ])
 
-        # Verificar columnas
-        expected_columns = ["ASALTO_ARMADO", "Provincia", "Canton", "Victima", "Edad_Victima", "Sexo_Victima", "Total_Asaltos"]
-        assert df_result.columns == expected_columns
+    # Ejecutar la función
+    df_result = join_delitosEducacion(df_delitos, df_educacion)
 
-        # Verificar valores de ASALTO_ARMADO
-        result_dict = { (row.Victima, row.Edad_Victima, row.Sexo_Victima): row.ASALTO_ARMADO for row in df_result.collect() }
-        assert result_dict[("Adulto","30","M")] == "SI"
-        assert result_dict[("Adulto","25","F")] == "NO"
+    # Verificar columnas
+    expected_columns = [
+        "Provincia", "Canton", "ASALTO_ARMADO", "Victima", "Edad_Victima",
+        "Sexo_Victima", "Total_Asaltos", "Nivel_Educativo", "Sexo", "Total_Personas_Canton"
+    ]
+    assert df_result.columns == expected_columns
+
+    # Verificar número de filas
+    assert df_result.count() == 2
+
+    # Verificar join correcto
+    result_dict = {(row.Provincia, row.Canton): (row.ASALTO_ARMADO, row.Nivel_Educativo) for row in df_result.collect()}
+    assert result_dict[("Pichincha","Quito")] == ("SI", "Primaria")
+    assert result_dict[("Guayas","Guayaquil")] == ("NO", "Secundaria")
