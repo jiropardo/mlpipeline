@@ -369,15 +369,14 @@ def join_todo(df_delitosEducation, df_idh, df_ingreso, df_ev, df_idc, df_ibm):
     
     return df_merged
 
-def escribir_BaseDatos(spark, df_final):
-    
+def escribir_BaseDatos(spark, df_final, table_name):
     df_final.write \
     .format("jdbc") \
     .option("url", "jdbc:postgresql://172.17.0.1:5433/postgres") \
     .option("driver", "org.postgresql.Driver") \
     .option("user", "postgres") \
     .option("password", "testPassword") \
-    .option("dbtable", "DatosUnidos") \
+    .option("dbtable", table_name) \
     .mode("overwrite") \
     .save()
 

@@ -87,7 +87,7 @@ def main():
     
     # escribir Datos
     
-    escribir_BaseDatos(spark, df_final)
+    escribir_BaseDatos(spark, df_final, "DatosUnidos")
     # df_final.write \
     # .format("jdbc") \
     # .option("url", "jdbc:postgresql://172.17.0.1:5433/postgres") \

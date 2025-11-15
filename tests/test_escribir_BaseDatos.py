@@ -12,7 +12,7 @@ def test_escribir_BaseDatos_real(spark):
 
     # ---- 3. Run your function (writes to PostgreSQL) ----
  # <--- change module name
-    escribir_BaseDatos(spark, df_final)
+    escribir_BaseDatos(spark, df_final, "TestTable")
 
     # ---- 4. Read the table back from PostgreSQL ----
     df_read = spark.read \
@@ -21,7 +21,7 @@ def test_escribir_BaseDatos_real(spark):
         .option("driver", "org.postgresql.Driver") \
         .option("user", "postgres") \
         .option("password", "testPassword") \
-        .option("dbtable", "DatosUnidos") \
+        .option("dbtable", "TestTable") \
         .load()
 
     # ---- 5. Assertions ----
