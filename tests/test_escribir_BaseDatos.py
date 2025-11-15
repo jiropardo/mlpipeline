@@ -3,31 +3,25 @@ from pyspark.sql import SparkSession
 from pyspark.sql import Row
 from functools import reduce
 from funciones.procesamiento import escribir_BaseDatos
+from unittest.mock import MagicMock
+from pyspark.sql import SparkSession, Row
 
-def test_escribir_BaseDatos_real(spark):
+def test_escribir_BaseDatos(spark, monkeypatch):
 
-    # ---- 2. Create simple DataFrame in memory ----
-    input_data = [Row(a=1), Row(a=2), Row(a=3)]
-    df_final = spark.createDataFrame(input_data)
+     # 2. Create a simple DataFrame
+    df_final = spark.createDataFrame([Row(a=1), Row(a=2)])
 
-    # ---- 3. Run your function (writes to PostgreSQL) ----
- # <--- change module name
-    escribir_BaseDatos(spark, df_final, "TestTable")
+    # 3. Take the real Spark writer
+    real_writer = df_final.write
 
-    # ---- 4. Read the table back from PostgreSQL ----
-    df_read = spark.read \
-        .format("jdbc") \
-        .option("url", "jdbc:postgresql://172.17.0.1:5433/postgres") \
-        .option("driver", "org.postgresql.Driver") \
-        .option("user", "postgres") \
-        .option("password", "testPassword") \
-        .option("dbtable", "TestTable") \
-        .load()
+    # 4. Intercept ONLY the final save() so Spark never loads JDBC driver
+    real_writer.save = MagicMock(name="save")
 
-    # ---- 5. Assertions ----
-    # row count must match
-    assert df_read.count() == len(input_data)
+    # 5. Replace df.write with our modified writer
+    monkeypatch.setattr(df_final, "write", real_writer)
 
-    # check values
-    read_values = [row["a"] for row in df_read.collect()]
-    assert set(read_values) == {1, 2, 3}
+    # 6. Run your function (will NOT attempt to load the driver)
+    escribir_BaseDatos(spark, df_final)
+
+    # 7. Assert that save() was called exactly once
+    real_writer.save.assert_called_once()
