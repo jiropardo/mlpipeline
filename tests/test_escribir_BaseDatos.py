@@ -6,22 +6,24 @@ from funciones.procesamiento import escribir_BaseDatos
 from unittest.mock import MagicMock
 from pyspark.sql import SparkSession, Row
 
-def test_escribir_BaseDatos(spark, monkeypatch):
+import pytest
+from unittest.mock import MagicMock
+from pyspark.sql import Row
+from pyspark.sql.readwriter import DataFrameWriter
 
-     # 2. Create a simple DataFrame
+def test_escribir_BaseDatos(spark, monkeypatch):
+    # 1. A simple DataFrame
     df_final = spark.createDataFrame([Row(a=1), Row(a=2)])
 
-    # 3. Take the real Spark writer
-    real_writer = df_final.write
+    # 2. Patch ONLY the save() method of DataFrameWriter
+    mock_save = MagicMock(name="save")
+    monkeypatch.setattr(DataFrameWriter, "save", mock_save)
 
-    # 4. Intercept ONLY the final save() so Spark never loads JDBC driver
-    real_writer.save = MagicMock(name="save")
+    # 3. Import your function
+    from your_module import escribir_BaseDatos
 
-    # 5. Replace df.write with our modified writer
-    monkeypatch.setattr(df_final, "write", real_writer)
-
-    # 6. Run your function (will NOT attempt to load the driver)
+    # 4. Run function (will hit DataFrameWriter.save)
     escribir_BaseDatos(spark, df_final)
 
-    # 7. Assert that save() was called exactly once
-    real_writer.save.assert_called_once()
+    # 5. Assert save() was called once
+    mock_save.assert_called_once()
