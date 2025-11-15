@@ -2,7 +2,7 @@ import findspark
 import os
 import sys
 from pyspark.sql import SparkSession
-from funciones.procesamiento import crear_DF_Delitos, crear_DF_Educacion ,  crear_DF_Ingreso, crear_DF_idh, crear_DF_ev, crear_DF_ibm, crear_DF_idc, join_delitosEducacion, join_todo
+from funciones.procesamiento import crear_DF_Delitos, crear_DF_Educacion ,  crear_DF_Ingreso, crear_DF_idh, crear_DF_ev, crear_DF_ibm, crear_DF_idc, join_delitosEducacion, join_todo, escribir_BaseDatos
 
 from pyspark.sql.types import (StringType, IntegerType, FloatType, 
                                DecimalType, StructField, StructType, DoubleType)
@@ -86,15 +86,17 @@ def main():
     print(spark.sparkContext.getConf().get("spark.jars"))
     
     # escribir Datos
-    df_final.write \
-    .format("jdbc") \
-    .option("url", "jdbc:postgresql://172.17.0.1:5433/postgres") \
-    .option("driver", "org.postgresql.Driver") \
-    .option("user", "postgres") \
-    .option("password", "testPassword") \
-    .option("dbtable", "DatosUnidos") \
-    .mode("overwrite") \
-    .save()
+    
+    escribir_BaseDatos(df_final)
+    # df_final.write \
+    # .format("jdbc") \
+    # .option("url", "jdbc:postgresql://172.17.0.1:5433/postgres") \
+    # .option("driver", "org.postgresql.Driver") \
+    # .option("user", "postgres") \
+    # .option("password", "testPassword") \
+    # .option("dbtable", "DatosUnidos") \
+    # .mode("overwrite") \
+    # .save()
   
     spark.stop()
 
