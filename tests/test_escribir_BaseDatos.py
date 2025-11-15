@@ -19,9 +19,6 @@ def test_escribir_BaseDatos(spark, monkeypatch):
     mock_save = MagicMock(name="save")
     monkeypatch.setattr(DataFrameWriter, "save", mock_save)
 
-    # 3. Import your function
-    from your_module import escribir_BaseDatos
-
     # 4. Run function (will hit DataFrameWriter.save)
     escribir_BaseDatos(spark, df_final)
 
