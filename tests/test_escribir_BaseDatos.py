@@ -20,7 +20,7 @@ def test_escribir_BaseDatos(spark, monkeypatch):
     monkeypatch.setattr(DataFrameWriter, "save", mock_save)
 
     # 4. Run function (will hit DataFrameWriter.save)
-    escribir_BaseDatos(spark, df_final)
+    escribir_BaseDatos(spark, df_final, "testTable")
 
     # 5. Assert save() was called once
     mock_save.assert_called_once()
